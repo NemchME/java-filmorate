@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -44,9 +45,8 @@ public class UserController {
         try {
             if (!users.containsKey(user.getId())) {
                 log.warn("Пользователь с ID {} не найден", user.getId());
-                throw new ValidationException("Пользователь не найден");
+                throw new ResourceNotFoundException("Пользователь не найден"); // Изменено с ValidationException
             }
-
             validateUser(user);
             users.put(user.getId(), user);
             log.info("Пользователь успешно обновлён. ID: {}, Новые данные: {}", user.getId(), user);

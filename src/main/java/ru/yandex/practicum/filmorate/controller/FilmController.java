@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
@@ -39,7 +40,7 @@ public class FilmController {
         try {
             if (!films.containsKey(film.getId())) {
                 log.warn("Фильм с ID {} не найден", film.getId());
-                throw new ValidationException("Фильм не найден");
+                throw new ResourceNotFoundException("Фильм не найден");
             }
             validateFilm(film);
             films.put(film.getId(), film);
