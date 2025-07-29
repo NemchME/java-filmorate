@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -102,11 +103,12 @@ class UserControllerTest {
         assertEquals("Дата рождения не может быть в будущем", exception.getMessage());
     }
 
+
     @Test
-    void updateUser_NonExistentId_ShouldThrowValidationException() {
+    void updateUser_NonExistentId_ShouldThrowResourceNotFoundException() {
         validUser.setId(999);
 
-        ValidationException exception = assertThrows(ValidationException.class,
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
                 () -> userController.updateUser(validUser));
         assertEquals("Пользователь не найден", exception.getMessage());
     }
