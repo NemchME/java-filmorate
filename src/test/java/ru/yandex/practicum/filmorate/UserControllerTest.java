@@ -1,19 +1,24 @@
 package ru.yandex.practicum.filmorate;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
     private UserController userController;
     private User validUser;
+    private Validator validator;
 
     @BeforeEach
     void setUp() {
@@ -22,6 +27,10 @@ class UserControllerTest {
         validUser.setEmail("user@example.com");
         validUser.setLogin("validLogin");
         validUser.setBirthday(LocalDate.of(2000, 1, 1));
+
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            validator = factory.getValidator();
+        }
     }
 
     @Test
@@ -34,30 +43,33 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser_EmptyLogin_ShouldThrowValidationException() {
+    void createUser_EmptyLogin_ShouldFailValidation() {
         validUser.setLogin("");
 
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> userController.createUser(validUser));
-        assertEquals("Логин не может быть пустым", exception.getMessage());
+        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Логин не может быть пустым")));
     }
 
     @Test
-    void createUser_NullLogin_ShouldThrowValidationException() {
+    void createUser_NullLogin_ShouldFailValidation() {
         validUser.setLogin(null);
 
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> userController.createUser(validUser));
-        assertEquals("Логин не может быть пустым", exception.getMessage());
+        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Логин не может быть пустым")));
     }
 
     @Test
-    void createUser_LoginWithSpaces_ShouldThrowValidationException() {
+    void createUser_LoginWithSpaces_ShouldFailValidation() {
         validUser.setLogin("login with spaces");
 
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> userController.createUser(validUser));
-        assertEquals("Логин не должен содержать пробелы", exception.getMessage());
+        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Логин не должен содержать пробелы")));
     }
 
     @Test
@@ -77,32 +89,34 @@ class UserControllerTest {
     }
 
     @Test
-    void createUser_InvalidEmail_ShouldThrowValidationException() {
+    void createUser_InvalidEmail_ShouldFailValidation() {
         validUser.setEmail("invalid-email");
 
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> userController.createUser(validUser));
-        assertEquals("Электронная почта должна содержать @", exception.getMessage());
+        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Электронная почта должна быть корректного формата")));
     }
 
     @Test
-    void createUser_NullEmail_ShouldThrowValidationException() {
+    void createUser_NullEmail_ShouldFailValidation() {
         validUser.setEmail(null);
 
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> userController.createUser(validUser));
-        assertEquals("Электронная почта должна содержать @", exception.getMessage());
+        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Электронная почта не может быть пустой")));
     }
 
     @Test
-    void createUser_FutureBirthday_ShouldThrowValidationException() {
+    void createUser_FutureBirthday_ShouldFailValidation() {
         validUser.setBirthday(LocalDate.now().plusDays(1));
 
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> userController.createUser(validUser));
-        assertEquals("Дата рождения не может быть в будущем", exception.getMessage());
+        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().contains("Дата рождения не может быть в будущем")));
     }
-
 
     @Test
     void updateUser_NonExistentId_ShouldThrowResourceNotFoundException() {
