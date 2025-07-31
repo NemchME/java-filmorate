@@ -1,11 +1,10 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
-import jakarta.validation.Valid;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
 
@@ -13,39 +12,57 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final UserStorage userStorage;
+    private final UserService userService;
 
-    public UserController(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
-
-    @PostMapping
-    public User createUser(@Valid @RequestBody User user) {
-        log.info("POST /users - Создание нового пользователя. Данные: {}", user);
-        User createdUser = userStorage.createUser(user);
-        log.info("Пользователь успешно создан. ID: {}, Логин: {}", createdUser.getId(), createdUser.getLogin());
-        return createdUser;
-    }
-
-    @PutMapping
-    public User updateUser(@Valid @RequestBody User user) {
-        log.info("PUT /users - Обновление пользователя с ID: {}", user.getId());
-
-        if (userStorage.getUser(user.getId()) == null) {
-            log.warn("Пользователь с ID {} не найден", user.getId());
-            throw new ResourceNotFoundException("Пользователь не найден");
-        }
-
-        User updatedUser = userStorage.updateUser(user);
-        log.info("Пользователь успешно обновлён. ID: {}, Новые данные: {}", updatedUser.getId(), updatedUser);
-        return updatedUser;
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping
     public List<User> getAllUsers() {
-        log.info("GET /users - Запрос списка всех пользователей");
-        List<User> allUsers = userStorage.getAllUsers();
-        log.debug("Найдено {} пользователей", allUsers.size());
-        return allUsers;
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable int id) {
+        return userService.getUser(id);
+    }
+
+    @PostMapping
+    public User createUser(@RequestBody User user) {
+        return userService.createUser(user);
+    }
+
+    @PutMapping
+    public User updateUser(@RequestBody User user) {
+        return userService.updateUser(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable int id) {
+        userService.deleteUser(id);
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable int id, @PathVariable int friendId) {
+        userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFriend(@PathVariable int id, @PathVariable int friendId) {
+        userService.removeFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable int id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(
+            @PathVariable int id,
+            @PathVariable int otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 }
