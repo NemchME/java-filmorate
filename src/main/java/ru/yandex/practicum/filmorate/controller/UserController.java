@@ -4,52 +4,47 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import jakarta.validation.Valid;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final Map<Integer, User> users = new HashMap<>();
-    private int nextId = 1;
+    private final UserStorage userStorage;
+
+    public UserController(UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
         log.info("POST /users - Создание нового пользователя. Данные: {}", user);
-
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.debug("Имя пользователя пустое, используем логин: {}", user.getLogin());
-            user.setName(user.getLogin());
-        }
-
-        user.setId(nextId++);
-        users.put(user.getId(), user);
-        log.info("Пользователь успешно создан. ID: {}, Логин: {}", user.getId(), user.getLogin());
-        return user;
+        User createdUser = userStorage.createUser(user);
+        log.info("Пользователь успешно создан. ID: {}, Логин: {}", createdUser.getId(), createdUser.getLogin());
+        return createdUser;
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.info("PUT /users - Обновление пользователя с ID: {}", user.getId());
 
-        if (!users.containsKey(user.getId())) {
+        if (userStorage.getUser(user.getId()) == null) {
             log.warn("Пользователь с ID {} не найден", user.getId());
             throw new ResourceNotFoundException("Пользователь не найден");
         }
 
-        users.put(user.getId(), user);
-        log.info("Пользователь успешно обновлён. ID: {}, Новые данные: {}", user.getId(), user);
-        return user;
+        User updatedUser = userStorage.updateUser(user);
+        log.info("Пользователь успешно обновлён. ID: {}, Новые данные: {}", updatedUser.getId(), updatedUser);
+        return updatedUser;
     }
 
     @GetMapping
     public List<User> getAllUsers() {
         log.info("GET /users - Запрос списка всех пользователей");
-        List<User> allUsers = List.copyOf(users.values());
+        List<User> allUsers = userStorage.getAllUsers();
         log.debug("Найдено {} пользователей", allUsers.size());
         return allUsers;
     }

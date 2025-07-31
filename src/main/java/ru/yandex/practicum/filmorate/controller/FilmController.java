@@ -5,52 +5,51 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import jakarta.validation.Valid;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private final Map<Integer, Film> films = new HashMap<>();
-    private int nextId = 1;
+    private final FilmStorage filmStorage;
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+
+    public FilmController(FilmStorage filmStorage) {
+        this.filmStorage = filmStorage;
+    }
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
         log.info("POST /films - Добавление нового фильма: {}", film);
-
         validateReleaseDate(film.getReleaseDate());
-
-        film.setId(nextId++);
-        films.put(film.getId(), film);
-        log.info("Фильм успешно добавлен. ID: {}, Название: {}", film.getId(), film.getName());
-        return film;
+        Film addedFilm = filmStorage.addFilm(film);
+        log.info("Фильм успешно добавлен. ID: {}, Название: {}", addedFilm.getId(), addedFilm.getName());
+        return addedFilm;
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("PUT /films - Обновление фильма с ID: {}", film.getId());
-
         validateReleaseDate(film.getReleaseDate());
 
-        if (!films.containsKey(film.getId())) {
+        if (filmStorage.getFilm(film.getId()) == null) {
             log.warn("Фильм с ID {} не найден", film.getId());
             throw new ResourceNotFoundException("Фильм не найден");
         }
-        films.put(film.getId(), film);
-        log.info("Фильм успешно обновлён. ID: {}, Новые данные: {}", film.getId(), film);
-        return film;
+
+        Film updatedFilm = filmStorage.updateFilm(film);
+        log.info("Фильм успешно обновлён. ID: {}, Новые данные: {}", updatedFilm.getId(), updatedFilm);
+        return updatedFilm;
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
         log.info("GET /films - Запрос всех фильмов");
-        List<Film> allFilms = List.copyOf(films.values());
+        List<Film> allFilms = filmStorage.getAllFilms();
         log.debug("Найдено {} фильмов", allFilms.size());
         return allFilms;
     }
