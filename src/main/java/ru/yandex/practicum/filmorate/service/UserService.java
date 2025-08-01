@@ -39,6 +39,14 @@ public class UserService {
         return user;
     }
 
+    public User getUserOrThrow(int id) {
+        User user = userStorage.getUser(id);
+        if (user == null) {
+            throw new ResourceNotFoundException("Пользователь с ID " + id + " не найден");
+        }
+        return user;
+    }
+
     public List<User> getAllUsers() {
         return userStorage.getAllUsers();
     }

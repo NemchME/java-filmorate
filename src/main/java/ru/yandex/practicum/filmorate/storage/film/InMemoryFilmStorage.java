@@ -11,6 +11,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     private int nextId = 1;
 
     @Override
+    public List<Film> getAllFilms() {
+        return new ArrayList<>(films.values());
+    }
+
+    @Override
     public Film addFilm(Film film) {
         film.setId(nextId++);
         films.put(film.getId(), film);
@@ -29,11 +34,6 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film getFilm(int id) {
         return films.get(id);
-    }
-
-    @Override
-    public List<Film> getAllFilms() {
-        return new ArrayList<>(films.values());
     }
 
     @Override

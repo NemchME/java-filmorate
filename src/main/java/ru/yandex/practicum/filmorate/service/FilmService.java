@@ -7,16 +7,19 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final UserService userService;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService) {
         this.filmStorage = filmStorage;
+        this.userService = userService;
     }
 
     public Film addFilm(Film film) {
@@ -49,9 +52,12 @@ public class FilmService {
 
     public void addLike(int filmId, int userId) {
         Film film = getFilm(filmId);
-        if (!film.getLikes().add(userId)) {
+        userService.getUser(userId);
+
+        if (film.getLikes().contains(userId)) {
             throw new ValidationException("Пользователь уже поставил лайк этому фильму");
         }
+        film.getLikes().add(userId);
     }
 
     public void removeLike(int filmId, int userId) {
@@ -66,5 +72,13 @@ public class FilmService {
                 .sorted(Comparator.comparingInt(f -> -f.getLikes().size()))
                 .limit(count)
                 .collect(Collectors.toList());
+    }
+
+    private Film getFilmOrThrow(int id) {
+        Film film = filmStorage.getFilm(id);
+        if (film == null) {
+            throw new ResourceNotFoundException("Фильм с ID " + id + " не найден");
+        }
+        return film;
     }
 }
