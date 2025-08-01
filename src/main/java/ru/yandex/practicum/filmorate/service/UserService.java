@@ -3,10 +3,11 @@ package ru.yandex.practicum.filmorate.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,12 +44,20 @@ public class UserService {
     }
 
     public void deleteUser(int id) {
+        if (userStorage.getUser(id) == null) {
+            throw new ResourceNotFoundException("Пользователь с ID " + id + " не найден");
+        }
         userStorage.deleteUser(id);
     }
 
     public void addFriend(int userId, int friendId) {
         User user = getUser(userId);
         User friend = getUser(friendId);
+
+        if (user.getFriends().contains(friendId)) {
+            throw new ValidationException("Пользователи уже являются друзьями");
+        }
+
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
     }
@@ -56,6 +65,7 @@ public class UserService {
     public void removeFriend(int userId, int friendId) {
         User user = getUser(userId);
         User friend = getUser(friendId);
+
         user.getFriends().remove(friendId);
         friend.getFriends().remove(userId);
     }

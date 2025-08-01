@@ -21,8 +21,15 @@ public class User {
 
     private String name;
 
+    @NotNull(message = "Дата рождения должна быть указана")
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 
     private final Set<Integer> friends = new HashSet<>();
+
+    public void prepareForSave() {
+        if (name == null || name.isBlank()) {
+            name = login;
+        }
+    }
 }
