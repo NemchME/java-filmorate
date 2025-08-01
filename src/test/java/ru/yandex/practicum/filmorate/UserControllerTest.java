@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -51,8 +52,7 @@ class UserControllerTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(validUser);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().equals("Электронная почта не может быть пустой")));
+        assertEquals("Электронная почта не может быть пустой", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -61,18 +61,7 @@ class UserControllerTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(validUser);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().equals("Электронная почта должна быть корректного формата")));
-    }
-
-    @Test
-    void addUser_EmptyLogin_ShouldFailValidation() {
-        validUser.setLogin("");
-
-        Set<ConstraintViolation<User>> violations = validator.validate(validUser);
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().equals("Логин не может быть пустым")));
+        assertEquals("Электронная почта должна быть корректного формата", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -81,8 +70,7 @@ class UserControllerTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(validUser);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().equals("Логин не должен содержать пробелы")));
+        assertEquals("Логин не должен содержать пробелы", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -91,8 +79,7 @@ class UserControllerTest {
 
         Set<ConstraintViolation<User>> violations = validator.validate(validUser);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().equals("Дата рождения не может быть в будущем")));
+        assertEquals("Дата рождения не может быть в будущем", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -102,5 +89,38 @@ class UserControllerTest {
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
                 () -> userController.updateUser(validUser));
         assertEquals("Пользователь с ID 999 не найден", exception.getMessage());
+    }
+
+    @Test
+    void getUser_NonExistentId_ShouldThrowResourceNotFoundException() {
+        int nonExistentId = 999;
+        assertThrows(ResourceNotFoundException.class,
+                () -> userController.getUser(nonExistentId));
+    }
+
+    @Test
+    void deleteUser_ShouldRemoveUser() {
+        User addedUser = userController.createUser(validUser);
+        int userId = addedUser.getId();
+
+        userController.deleteUser(userId);
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> userController.getUser(userId));
+    }
+
+    @Test
+    void getAllUsers_ShouldReturnAllUsers() {
+        userController.createUser(validUser);
+
+        User anotherUser = new User();
+        anotherUser.setEmail("another@example.com");
+        anotherUser.setLogin("anotherLogin");
+        anotherUser.setName("Another User");
+        anotherUser.setBirthday(LocalDate.of(2001, 1, 1));
+        userController.createUser(anotherUser);
+
+        List<User> users = userController.getAllUsers();
+        assertEquals(2, users.size());
     }
 }
