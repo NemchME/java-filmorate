@@ -10,8 +10,8 @@ import org.springframework.http.ResponseEntity;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.ResourceNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.impl.FilmServiceImpl;
+import ru.yandex.practicum.filmorate.service.impl.UserServiceImpl;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
@@ -28,8 +28,8 @@ class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
-        UserService userService = new UserService(new InMemoryUserStorage());
-        filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), userService));
+        UserServiceImpl userServiceImpl = new UserServiceImpl(new InMemoryUserStorage());
+        filmController = new FilmController(new FilmServiceImpl(new InMemoryFilmStorage(), userServiceImpl));
 
         validFilm = new Film();
         validFilm.setName("Valid Film");
